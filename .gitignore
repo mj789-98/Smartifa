@@ -96,3 +96,4 @@ tasks.json
 tasks/ 
 .env.example
 .cursor/mcp.json
+scripts/task-complexity-report.json
