@@ -5,14 +5,14 @@ public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
-    [Header("UI References")]
-    private UIManager uiManager;
-
     [Header("Game State")]
     private bool isGameOver = false;
     private int currentScore = 0;
     private int coinsCollected = 0;
     private int highScore = 0;
+
+    // Reference to the current scene's UI
+    private GameUI gameUI;
 
     private void Awake()
     {
@@ -39,12 +39,10 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Find the UIManager in the newly loaded scene
-        uiManager = FindObjectOfType<UIManager>();
-        
-        // Reset game state if this is the game scene
+        // Find the GameUI in the game scene
         if (scene.name == "GameScene")
         {
+            gameUI = FindObjectOfType<GameUI>();
             ResetGame();
         }
     }
@@ -64,9 +62,9 @@ public class GameManager : MonoBehaviour
             }
 
             // Show game over UI
-            if (uiManager != null)
+            if (gameUI != null)
             {
-                uiManager.ShowGameOver(currentScore, coinsCollected, highScore);
+                gameUI.ShowGameOver(currentScore, coinsCollected, highScore);
             }
         }
     }
@@ -76,9 +74,9 @@ public class GameManager : MonoBehaviour
         if (!isGameOver)
         {
             currentScore = newScore;
-            if (uiManager != null)
+            if (gameUI != null)
             {
-                uiManager.UpdateScore(currentScore);
+                gameUI.UpdateScore(currentScore);
             }
         }
     }
@@ -88,9 +86,9 @@ public class GameManager : MonoBehaviour
         if (!isGameOver)
         {
             coinsCollected += amount;
-            if (uiManager != null)
+            if (gameUI != null)
             {
-                uiManager.UpdateCoins(coinsCollected);
+                gameUI.UpdateCoins(coinsCollected);
             }
         }
     }
@@ -103,10 +101,10 @@ public class GameManager : MonoBehaviour
         Time.timeScale = 1f;
         
         // Update UI with reset values
-        if (uiManager != null)
+        if (gameUI != null)
         {
-            uiManager.UpdateScore(currentScore);
-            uiManager.UpdateCoins(coinsCollected);
+            gameUI.UpdateScore(currentScore);
+            gameUI.UpdateCoins(coinsCollected);
         }
     }
 

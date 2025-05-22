@@ -13,6 +13,7 @@ public class CoinCollector : MonoBehaviour
 
     private int totalCoins = 0;
     private AudioSource audioSource;
+    private GameManager gameManager;
 
     private void Start()
     {
@@ -29,8 +30,19 @@ public class CoinCollector : MonoBehaviour
         if (onCoinCollected == null)
             onCoinCollected = new UnityEvent<int>();
 
+        // Get GameManager reference
+        gameManager = GameManager.Instance;
+        if (gameManager == null)
+        {
+            Debug.LogError("GameManager not found!");
+        }
+
         // Trigger initial coins update
         onCoinsUpdated.Invoke(totalCoins);
+        if (gameManager != null)
+        {
+            gameManager.AddCoins(0); // Initialize UI with 0 coins
+        }
     }
 
     public void CollectCoin(int value)
@@ -41,6 +53,12 @@ public class CoinCollector : MonoBehaviour
         if (audioSource != null && coinCollectSound != null)
         {
             audioSource.PlayOneShot(coinCollectSound, coinCollectVolume);
+        }
+
+        // Update GameManager
+        if (gameManager != null)
+        {
+            gameManager.AddCoins(value);
         }
 
         // Trigger events
