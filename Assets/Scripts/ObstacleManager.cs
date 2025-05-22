@@ -24,6 +24,7 @@ public class ObstacleManager : MonoBehaviour
 
     private float nextSpawnTime;
     private Transform playerTransform;
+    private int obstacleLayer;
 
     private void Start()
     {
@@ -36,6 +37,13 @@ public class ObstacleManager : MonoBehaviour
         else
         {
             Debug.LogError("Player not found! Ensure player has 'Player' tag.");
+        }
+
+        // Get the obstacle layer
+        obstacleLayer = LayerMask.NameToLayer(GameLayers.ObstacleLayer);
+        if (obstacleLayer == -1)
+        {
+            Debug.LogError($"Layer '{GameLayers.ObstacleLayer}' not found! Please create this layer in Unity.");
         }
 
         gameStartTime = Time.time;
@@ -67,41 +75,40 @@ public class ObstacleManager : MonoBehaviour
         );
 
         // Spawn the obstacle
-        Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
+        GameObject obstacle = Instantiate(selectedPrefab, spawnPosition, Quaternion.identity);
 
-        // Set next spawn time
-        nextSpawnTime = Time.time + Random.Range(minSpawnInterval, maxSpawnInterval);
+        // Set the layer and tag
+        GameLayers.SetupObjectLayers(obstacle, GameLayers.ObstacleLayer, GameLayers.ObstacleTag);
+
+        // Debug log
+        Debug.Log($"Spawned obstacle: {obstacle.name}, Layer: {obstacle.layer}, Tag: {obstacle.tag}");
     }
 
-    private float GetRandomYPosition(GameObject obstacle)
+    private float GetRandomYPosition(GameObject prefab)
     {
-        // Get the obstacle's collider height (if any)
-        BoxCollider2D collider = obstacle.GetComponent<BoxCollider2D>();
-        float objectHeight = collider != null ? collider.size.y : 1f;
+        // Get the height of the obstacle using its collider
+        BoxCollider2D collider = prefab.GetComponent<BoxCollider2D>();
+        float obstacleHeight = collider != null ? collider.size.y * prefab.transform.localScale.y : 1f;
 
-        // Determine if this should be a ground-level or floating obstacle
-        bool isGroundObstacle = Random.value > 0.3f; // 70% chance for ground obstacles
+        // Calculate min and max Y positions
+        float minY = groundLevel + (obstacleHeight * 0.5f) + minHeightAboveGround;
+        float maxY = groundLevel + maxHeightAboveGround - (obstacleHeight * 0.5f);
 
-        if (isGroundObstacle)
-        {
-            return groundLevel + (objectHeight * 0.5f);
-        }
-        else
-        {
-            // For floating obstacles, ensure they're at a jumpable height
-            return Random.Range(minHeightAboveGround, maxHeightAboveGround);
-        }
+        // Return random Y position within range
+        return Random.Range(minY, maxY);
     }
 
     private void UpdateSpawnInterval()
     {
-        // Calculate time-based difficulty scaling
-        float timeElapsed = Time.time - gameStartTime;
-        float difficultyMultiplier = 1f - (timeElapsed * difficultyScalingRate);
-        
-        // Clamp the values to prevent them from becoming too small
-        minSpawnInterval = Mathf.Max(minIntervalLimit, minSpawnInterval * difficultyMultiplier);
-        maxSpawnInterval = Mathf.Max(minSpawnInterval + 0.5f, maxSpawnInterval * difficultyMultiplier);
+        // Calculate time since game start
+        float timeSinceStart = Time.time - gameStartTime;
+
+        // Calculate new interval range based on difficulty scaling
+        float currentMinInterval = Mathf.Max(minSpawnInterval - (timeSinceStart * difficultyScalingRate), minIntervalLimit);
+        float currentMaxInterval = Mathf.Max(maxSpawnInterval - (timeSinceStart * difficultyScalingRate), currentMinInterval + 0.5f);
+
+        // Set next spawn time
+        nextSpawnTime = Time.time + Random.Range(currentMinInterval, currentMaxInterval);
     }
 
     // Optional: Visualize spawn area in editor

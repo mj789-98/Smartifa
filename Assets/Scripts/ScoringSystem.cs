@@ -26,6 +26,7 @@ public class ScoringSystem : MonoBehaviour
     private float currentComboMultiplier = 1f;
     private GameOverManager gameOverManager;
     private LivesSystem livesSystem;
+    private GameManager gameManager;
 
     private void Awake()
     {
@@ -38,6 +39,12 @@ public class ScoringSystem : MonoBehaviour
         // Get components
         gameOverManager = FindObjectOfType<GameOverManager>();
         livesSystem = FindObjectOfType<LivesSystem>();
+        gameManager = GameManager.Instance;
+
+        if (gameManager == null)
+        {
+            Debug.LogError("GameManager not found!");
+        }
 
         // Auto-find player if not assigned
         if (playerTransform == null)
@@ -86,6 +93,12 @@ public class ScoringSystem : MonoBehaviour
         startXPosition = playerTransform != null ? playerTransform.position.x : 0f;
         ResetCombo();
         onScoreChanged.Invoke(currentScore);
+        
+        // Update GameManager
+        if (gameManager != null)
+        {
+            gameManager.UpdateScore(currentScore);
+        }
     }
 
     private void UpdateDistanceScore()
@@ -99,6 +112,13 @@ public class ScoringSystem : MonoBehaviour
         {
             currentScore = newDistanceScore;
             onScoreChanged.Invoke(currentScore);
+            
+            // Update GameManager
+            if (gameManager != null)
+            {
+                gameManager.UpdateScore(currentScore);
+            }
+            
             CheckHighScore();
         }
     }
@@ -117,6 +137,12 @@ public class ScoringSystem : MonoBehaviour
         onScoreChanged.Invoke(currentScore);
         onCoinCollected.Invoke(coinScore);
         onComboMultiplierChanged.Invoke(currentComboMultiplier);
+        
+        // Update GameManager
+        if (gameManager != null)
+        {
+            gameManager.UpdateScore(currentScore);
+        }
         
         CheckHighScore();
     }

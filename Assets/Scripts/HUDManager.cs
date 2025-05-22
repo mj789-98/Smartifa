@@ -53,6 +53,8 @@ public class HUDManager : MonoBehaviour
         {
             // Subscribe to lives events
             livesSystem.onLivesChanged.AddListener(UpdateLives);
+            // Initialize life icons with current lives
+            UpdateLives(livesSystem.GetCurrentLives());
         }
         else
         {
@@ -62,6 +64,30 @@ public class HUDManager : MonoBehaviour
         // Initialize UI
         if (comboPanel != null)
             comboPanel.SetActive(false);
+
+        // Validate life icons array
+        if (lifeIcons == null || lifeIcons.Length == 0)
+        {
+            Debug.LogError("No life icons assigned to HUDManager!");
+        }
+        else
+        {
+            // Check for duplicate references
+            for (int i = 0; i < lifeIcons.Length; i++)
+            {
+                if (lifeIcons[i] == null)
+                {
+                    Debug.LogError($"Life icon at index {i} is null!");
+                }
+                for (int j = i + 1; j < lifeIcons.Length; j++)
+                {
+                    if (lifeIcons[i] == lifeIcons[j])
+                    {
+                        Debug.LogError($"Duplicate life icon reference found at indices {i} and {j}!");
+                    }
+                }
+            }
+        }
     }
 
     private void Update()
@@ -126,6 +152,12 @@ public class HUDManager : MonoBehaviour
 
     private void UpdateLives(int lives)
     {
+        if (lifeIcons == null || lifeIcons.Length == 0) return;
+
+        // Ensure lives value is within bounds
+        lives = Mathf.Clamp(lives, 0, lifeIcons.Length);
+
+        // Update each life icon
         for (int i = 0; i < lifeIcons.Length; i++)
         {
             if (lifeIcons[i] != null)

@@ -37,6 +37,7 @@ public class CharacterControllerCC : MonoBehaviour
     private float lastJumpTime;
     private BoxCollider2D boxCollider;
     private bool jumpWasPressed = false;
+    private Vector2 targetVelocity;
 
     private void Start()
     {
@@ -58,6 +59,8 @@ public class CharacterControllerCC : MonoBehaviour
         rb.gravityScale = 3f;
         rb.constraints = RigidbodyConstraints2D.FreezeRotation;
         rb.collisionDetectionMode = CollisionDetectionMode2D.Continuous;
+        rb.interpolation = RigidbodyInterpolation2D.Interpolate;
+        rb.sleepMode = RigidbodySleepMode2D.NeverSleep;
         
         // Set up layer mask if not set
         if (groundLayer.value == 0)
@@ -91,6 +94,10 @@ public class CharacterControllerCC : MonoBehaviour
         
         // Handle jump input - both keyboard and touch
         HandleJumpInput();
+
+        // Update target velocity
+        float targetSpeed = Mathf.Min(currentSpeed + (acceleration * Time.deltaTime), maxSpeed);
+        targetVelocity = new Vector2(targetSpeed, rb.linearVelocity.y);
     }
     
     private void HandleJumpInput()
@@ -128,11 +135,8 @@ public class CharacterControllerCC : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // Update speed (clamped to maxSpeed)
-        currentSpeed = Mathf.Min(currentSpeed + (acceleration * Time.fixedDeltaTime), maxSpeed);
-        
-        // Move character forward
-        rb.linearVelocity = new Vector2(currentSpeed, rb.linearVelocity.y);
+        // Smoothly interpolate to target velocity
+        rb.linearVelocity = Vector2.Lerp(rb.linearVelocity, targetVelocity, Time.fixedDeltaTime * 10f);
     }
 
     private void CheckGrounded()

@@ -27,12 +27,14 @@ public class CollisionHandler : MonoBehaviour
     private float knockbackTimer = 0f;
     private bool isKnockedBack = false;
     private Vector2 knockbackDirection;
+    private LivesSystem livesSystem;
 
     private void Awake()
     {
         rb = GetComponent<Rigidbody2D>();
         spriteRenderer = GetComponent<SpriteRenderer>();
         audioSource = GetComponent<AudioSource>();
+        livesSystem = GetComponent<LivesSystem>();
         
         if (audioSource == null && hitSound != null)
         {
@@ -49,6 +51,18 @@ public class CollisionHandler : MonoBehaviour
             onInvincibilityStart = new UnityEvent();
         if (onInvincibilityEnd == null)
             onInvincibilityEnd = new UnityEvent();
+
+        // Debug log to verify initialization
+        Debug.Log("CollisionHandler initialized. LivesSystem: " + (livesSystem != null ? "Found" : "Not Found"));
+    }
+
+    private void Start()
+    {
+        // Verify components and setup
+        if (rb == null)
+            Debug.LogError("Rigidbody2D missing on player!");
+        if (livesSystem == null)
+            Debug.LogError("LivesSystem missing on player!");
     }
 
     private void Update()
@@ -86,6 +100,7 @@ public class CollisionHandler : MonoBehaviour
 
         if (collision.gameObject.CompareTag(GameLayers.ObstacleTag))
         {
+            Debug.Log("Collision with obstacle: " + collision.gameObject.name);
             HandleObstacleCollision(collision.gameObject, collision.GetContact(0).normal);
         }
     }
@@ -96,6 +111,7 @@ public class CollisionHandler : MonoBehaviour
 
         if (other.CompareTag(GameLayers.ObstacleTag))
         {
+            Debug.Log("Trigger with obstacle: " + other.gameObject.name);
             Vector2 direction = (transform.position - other.transform.position).normalized;
             HandleObstacleCollision(other.gameObject, direction);
         }
@@ -103,6 +119,8 @@ public class CollisionHandler : MonoBehaviour
 
     private void HandleObstacleCollision(GameObject obstacle, Vector2 collisionNormal)
     {
+        Debug.Log("Handling obstacle collision");
+
         // Trigger invincibility
         StartInvincibility();
 
@@ -123,6 +141,17 @@ public class CollisionHandler : MonoBehaviour
 
         // Trigger collision event
         onObstacleCollision.Invoke(obstacle);
+
+        // Lose a life
+        if (livesSystem != null)
+        {
+            Debug.Log("Calling LoseLife on LivesSystem");
+            livesSystem.LoseLife();
+        }
+        else
+        {
+            Debug.LogError("LivesSystem is null when trying to lose life!");
+        }
     }
 
     private void StartInvincibility()

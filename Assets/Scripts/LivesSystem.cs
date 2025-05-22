@@ -32,6 +32,7 @@ public class LivesSystem : MonoBehaviour
     private AudioSource audioSource;
     private CollisionHandler collisionHandler;
     private bool isGameOver = false;
+    private GameManager gameManager;
 
     private void Awake()
     {
@@ -47,6 +48,9 @@ public class LivesSystem : MonoBehaviour
         {
             collisionHandler.onObstacleCollision.AddListener(OnObstacleHit);
         }
+
+        // Get GameManager reference
+        gameManager = GameManager.Instance;
 
         // Initialize events
         if (onLivesChanged == null) onLivesChanged = new UnityEvent<int>();
@@ -150,8 +154,11 @@ public class LivesSystem : MonoBehaviour
             audioSource.PlayOneShot(gameOverSound);
         }
 
-        // Stop the game
-        Time.timeScale = 0f;
+        // Notify GameManager
+        if (gameManager != null)
+        {
+            gameManager.GameOver();
+        }
 
         // Trigger game over event
         onGameOver.Invoke();

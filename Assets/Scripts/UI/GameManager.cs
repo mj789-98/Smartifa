@@ -13,6 +13,8 @@ public class GameManager : MonoBehaviour
 
     // Reference to the current scene's UI
     private GameUI gameUI;
+    private ScoringSystem scoringSystem;
+    private LivesSystem livesSystem;
 
     private void Awake()
     {
@@ -26,6 +28,7 @@ public class GameManager : MonoBehaviour
         else
         {
             Destroy(gameObject);
+            return;
         }
 
         // Load high score from PlayerPrefs
@@ -39,10 +42,28 @@ public class GameManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        // Find the GameUI in the game scene
+        // Find the GameUI and ScoringSystem in the game scene
         if (scene.name == "GameScene")
         {
             gameUI = FindObjectOfType<GameUI>();
+            scoringSystem = FindObjectOfType<ScoringSystem>();
+
+            // Find or add LivesSystem to player
+            GameObject player = GameObject.FindGameObjectWithTag("Player");
+            if (player != null)
+            {
+                livesSystem = player.GetComponent<LivesSystem>();
+                if (livesSystem == null)
+                {
+                    livesSystem = player.AddComponent<LivesSystem>();
+                    Debug.Log("Added LivesSystem to player");
+                }
+            }
+            else
+            {
+                Debug.LogError("Player not found in scene!");
+            }
+
             ResetGame();
         }
     }
@@ -52,6 +73,13 @@ public class GameManager : MonoBehaviour
         if (!isGameOver)
         {
             isGameOver = true;
+
+            // Get final score from scoring system if available
+            if (scoringSystem != null)
+            {
+                currentScore = scoringSystem.GetCurrentScore();
+                highScore = scoringSystem.GetHighScore();
+            }
 
             // Check for new high score
             if (currentScore > highScore)
@@ -106,6 +134,12 @@ public class GameManager : MonoBehaviour
             gameUI.UpdateScore(currentScore);
             gameUI.UpdateCoins(coinsCollected);
         }
+
+        // Reset lives system
+        if (livesSystem != null)
+        {
+            livesSystem.ResetGame();
+        }
     }
 
     public bool IsGameOver()
@@ -116,5 +150,10 @@ public class GameManager : MonoBehaviour
     public int GetHighScore()
     {
         return highScore;
+    }
+
+    public int GetCurrentScore()
+    {
+        return currentScore;
     }
 } 
